@@ -1,0 +1,11 @@
+phase_id,phase_name,phase_code,description,sequence
+1,Pre-Construction,00,Planning, design, and pre-construction activities,1
+2,Site Work,10,Site preparation, demolition, and utilities,2
+3,Foundation,20,Excavation, footings, and foundation systems,3
+4,Structure,30,Structural framing and load-bearing elements,4
+5,Enclosure,40,Exterior walls, roofing, and weather protection,5
+6,Interiors,50,Interior partitions, doors, and basic finishes,6
+7,Mechanical,60,HVAC, plumbing, and mechanical systems,7
+8,Electrical,70,Electrical power, lighting, and communications,8
+9,Finishes,80,Interior and exterior finishes and specialties,9
+10,Closeout,90,Final inspections, testing, and project completion,10
