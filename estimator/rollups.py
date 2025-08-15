@@ -45,9 +45,15 @@ class CostRollup:
             phase_rollup[phase]['material'] += calc.material_cost
             phase_rollup[phase]['labor'] += calc.labor_cost
             phase_rollup[phase]['equipment'] += calc.equipment_cost
-            phase_rollup[phase]['overhead'] += calc.breakdown['overhead']
-            phase_rollup[phase]['profit'] += calc.breakdown['profit']
-            phase_rollup[phase]['subtotal'] += calc.breakdown['subtotal']
+            
+            # Handle breakdown fields safely
+            if 'overhead' in calc.breakdown:
+                phase_rollup[phase]['overhead'] += calc.breakdown['overhead']
+            if 'profit' in calc.breakdown:
+                phase_rollup[phase]['profit'] += calc.breakdown['profit']
+            if 'subtotal' in calc.breakdown:
+                phase_rollup[phase]['subtotal'] += calc.breakdown['subtotal']
+            
             phase_rollup[phase]['total'] += calc.total_cost
             phase_rollup[phase]['line_items'].append(calc_id)
             phase_rollup[phase]['quantity'] += calc.quantity
@@ -79,9 +85,15 @@ class CostRollup:
             trade_rollup[trade]['material'] += calc.material_cost
             trade_rollup[trade]['labor'] += calc.labor_cost
             trade_rollup[trade]['equipment'] += calc.equipment_cost
-            trade_rollup[trade]['overhead'] += calc.breakdown['overhead']
-            trade_rollup[trade]['profit'] += calc.breakdown['profit']
-            trade_rollup[trade]['subtotal'] += calc.breakdown['subtotal']
+            
+            # Handle breakdown fields safely
+            if 'overhead' in calc.breakdown:
+                trade_rollup[trade]['overhead'] += calc.breakdown['overhead']
+            if 'profit' in calc.breakdown:
+                trade_rollup[trade]['profit'] += calc.breakdown['profit']
+            if 'subtotal' in calc.breakdown:
+                trade_rollup[trade]['subtotal'] += calc.breakdown['subtotal']
+            
             trade_rollup[trade]['total'] += calc.total_cost
             trade_rollup[trade]['line_items'].append(calc_id)
             trade_rollup[trade]['quantity'] += calc.quantity
@@ -160,9 +172,15 @@ class CostRollup:
                         room_rollup[room.name]['material'] += calc.material_cost * room_ratio
                         room_rollup[room.name]['labor'] += calc.labor_cost * room_ratio
                         room_rollup[room.name]['equipment'] += calc.equipment_cost * room_ratio
-                        room_rollup[room.name]['overhead'] += calc.breakdown['overhead'] * room_ratio
-                        room_rollup[room.name]['profit'] += calc.breakdown['profit'] * room_ratio
-                        room_rollup[room.name]['subtotal'] += calc.breakdown['subtotal'] * room_ratio
+                        
+                        # Handle breakdown fields safely
+                        if 'overhead' in calc.breakdown:
+                            room_rollup[room.name]['overhead'] += calc.breakdown['overhead'] * room_ratio
+                        if 'profit' in calc.breakdown:
+                            room_rollup[room.name]['profit'] += calc.breakdown['profit'] * room_ratio
+                        if 'subtotal' in calc.breakdown:
+                            room_rollup[room.name]['subtotal'] += calc.breakdown['subtotal'] * room_ratio
+                        
                         room_rollup[room.name]['total'] += calc.total_cost * room_ratio
                         room_rollup[room.name]['line_items'].append(calc_id)
                         room_rollup[room.name]['area'] = room.area
@@ -174,9 +192,15 @@ class CostRollup:
                         room_rollup[room_name]['material'] += calc.material_cost
                         room_rollup[room_name]['labor'] += calc.labor_cost
                         room_rollup[room_name]['equipment'] += calc.equipment_cost
-                        room_rollup[room_name]['overhead'] += calc.breakdown['overhead']
-                        room_rollup[room_name]['profit'] += calc.breakdown['profit']
-                        room_rollup[room_name]['subtotal'] += calc.breakdown['subtotal']
+                        
+                        # Handle breakdown fields safely
+                        if 'overhead' in calc.breakdown:
+                            room_rollup[room_name]['overhead'] += calc.breakdown['overhead']
+                        if 'profit' in calc.breakdown:
+                            room_rollup[room_name]['profit'] += calc.breakdown['profit']
+                        if 'subtotal' in calc.breakdown:
+                            room_rollup[room_name]['subtotal'] += calc.breakdown['subtotal']
+                        
                         room_rollup[room_name]['total'] += calc.total_cost
                         room_rollup[room_name]['line_items'].append(calc_id)
                         room_rollup[room_name]['area'] = room.area
@@ -215,9 +239,15 @@ class CostRollup:
             phase_trade_rollup[phase][trade]['material'] += calc.material_cost
             phase_trade_rollup[phase][trade]['labor'] += calc.labor_cost
             phase_trade_rollup[phase][trade]['equipment'] += calc.equipment_cost
-            phase_trade_rollup[phase][trade]['overhead'] += calc.breakdown['overhead']
-            phase_trade_rollup[phase][trade]['profit'] += calc.breakdown['profit']
-            phase_trade_rollup[phase][trade]['subtotal'] += calc.breakdown['subtotal']
+            
+            # Handle breakdown fields safely
+            if 'overhead' in calc.breakdown:
+                phase_trade_rollup[phase][trade]['overhead'] += calc.breakdown['overhead']
+            if 'profit' in calc.breakdown:
+                phase_trade_rollup[phase][trade]['profit'] += calc.breakdown['profit']
+            if 'subtotal' in calc.breakdown:
+                phase_trade_rollup[phase][trade]['subtotal'] += calc.breakdown['subtotal']
+            
             phase_trade_rollup[phase][trade]['total'] += calc.total_cost
             phase_trade_rollup[phase][trade]['line_items'].append(calc_id)
             phase_trade_rollup[phase][trade]['quantity'] += calc.quantity
@@ -247,8 +277,10 @@ class CostRollup:
         total_material = sum(calc.material_cost for calc in calculations.values())
         total_labor = sum(calc.labor_cost for calc in calculations.values())
         total_equipment = sum(calc.equipment_cost for calc in calculations.values())
-        total_overhead = sum(calc.breakdown['overhead'] for calc in calculations.values())
-        total_profit = sum(calc.breakdown['profit'] for calc in calculations.values())
+        
+        # Handle breakdown fields safely
+        total_overhead = sum(calc.breakdown.get('overhead', Decimal('0')) for calc in calculations.values())
+        total_profit = sum(calc.breakdown.get('profit', Decimal('0')) for calc in calculations.values())
         total_cost = sum(calc.total_cost for calc in calculations.values())
         
         # Calculate percentages
