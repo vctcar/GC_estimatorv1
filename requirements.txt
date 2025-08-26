@@ -1,0 +1,17 @@
+# Core dependencies
+pandas>=1.5.0
+numpy>=1.21.0
+pydantic>=2.0.0
+openpyxl>=3.0.0  # For Excel file support
+
+# Optional dependencies for enhanced functionality
+# matplotlib>=3.5.0  # For plotting and visualization
+# seaborn>=0.11.0   # For statistical visualizations
+# plotly>=5.0.0     # For interactive charts
+# jupyter>=1.0.0    # For notebook support
+
+# Development dependencies
+# pytest>=7.0.0     # For testing
+# black>=22.0.0     # For code formatting
+# flake8>=5.0.0     # For linting
+# mypy>=1.0.0       # For type checking
