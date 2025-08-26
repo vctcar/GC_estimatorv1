@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { CreateEstimateDialog } from "@/components/CreateEstimateDialog";
+import { ImportDialog } from "@/components/ImportDialog";
 
 export default function Dashboard() {
   // Mock data for charts
@@ -25,9 +27,10 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">GC Estimator Dashboard</h1>
           <p className="text-muted-foreground">Manage and track your construction estimates</p>
         </div>
-        <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-          + New Estimate
-        </Button>
+        <div className="flex space-x-2">
+          <CreateEstimateDialog />
+          <ImportDialog />
+        </div>
       </div>
 
       {/* Summary Cards */}
