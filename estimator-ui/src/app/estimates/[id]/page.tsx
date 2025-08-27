@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AddItemDialog } from "@/components/AddItemDialog";
+import { ImportDialog } from "@/components/ImportDialog";
+import { ExportDialog } from "@/components/ExportDialog";
+import { SaveEstimate } from "@/components/SaveEstimate";
 import {
   Table,
   TableBody,
@@ -23,6 +26,8 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { Upload, Loader2 } from "lucide-react";
+import { useRollupData } from "@/hooks/useRollupData";
 
 // Mock data for QTO items
 const qtoItems = [
@@ -103,9 +108,62 @@ const tradeData = [
 export default function EstimateWorkspace({ params }: { params: { id: string } }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<typeof qtoItems[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [estimateData, setEstimateData] = useState<any>(null);
 
-  const columns: ColumnDef<typeof qtoItems[0]>[] = [
+  // Use rollup data hook
+  const {
+    rollupData,
+    isLoading: rollupLoading,
+    error: rollupError,
+    refreshRollupData,
+    getPhaseChartData,
+    getTradeChartData,
+    getCostBreakdownData
+  } = useRollupData(params.id);
+
+  // Load estimate data
+  useEffect(() => {
+    const loadEstimate = async () => {
+      try {
+        const response = await fetch(`/api/estimates/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setEstimateData(data.estimate);
+          setItems(data.estimate.items || []);
+        }
+      } catch (error) {
+        console.error("Error loading estimate:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEstimate();
+  }, [params.id]);
+
+  const refreshItems = () => {
+    // Reload items after adding/editing/deleting
+    const loadEstimate = async () => {
+      try {
+        const response = await fetch(`/api/estimates/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setItems(data.estimate.items || []);
+        }
+      } catch (error) {
+        console.error("Error loading estimate:", error);
+      }
+    };
+
+    loadEstimate();
+    // Also refresh rollup data to update totals and charts
+    refreshRollupData();
+  };
+
+  const columns: ColumnDef<any>[] = [
     {
       accessorKey: "phase",
       header: "Phase",
@@ -194,13 +252,36 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
           >
             Edit
           </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={async () => {
+              if (confirm("Are you sure you want to delete this item?")) {
+                try {
+                  const response = await fetch(`/api/estimates/${params.id}/items/${row.original.id}`, {
+                    method: "DELETE",
+                  });
+                  if (response.ok) {
+                    refreshItems();
+                  } else {
+                    alert("Failed to delete item");
+                  }
+                } catch (error) {
+                  console.error("Error deleting item:", error);
+                  alert("Failed to delete item");
+                }
+              }
+            }}
+          >
+            Delete
+          </Button>
         </div>
       ),
     },
   ];
 
   const table = useReactTable({
-    data: qtoItems,
+    data: items,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -211,10 +292,15 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
     },
   });
 
-  const totalDirectCost = qtoItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const overhead = totalDirectCost * 0.15; // 15% overhead
-  const profit = (totalDirectCost + overhead) * 0.10; // 10% profit
-  const totalEstimate = totalDirectCost + overhead + profit;
+  // Use rollup data for totals, fallback to local calculations if not available
+  const rollupSummary = rollupData?.rollup?.cost_summary;
+  const totalDirectCost = rollupSummary ? 
+    (rollupSummary.total_material || 0) + (rollupSummary.total_labor || 0) + (rollupSummary.total_equipment || 0) :
+    items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+  
+  const overhead = rollupSummary?.total_overhead || (totalDirectCost * 0.15);
+  const profit = rollupSummary?.total_profit || ((totalDirectCost + overhead) * 0.10);
+  const totalEstimate = rollupSummary?.total_cost || (totalDirectCost + overhead + profit);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -225,8 +311,15 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
           <p className="text-muted-foreground">Estimate ID: {params.id}</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">Export</Button>
-          <Button>Save</Button>
+          <ExportDialog 
+            estimateData={estimateData}
+            rollupData={rollupData}
+          />
+          <SaveEstimate 
+            estimateId={params.id}
+            estimateData={estimateData}
+            onSaveComplete={refreshItems}
+          />
         </div>
       </div>
 
@@ -235,16 +328,26 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Direct Costs</CardTitle>
+            {rollupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               ${totalDirectCost.toLocaleString()}
             </div>
+            {rollupData?.rollup?.cost_percentages && (
+              <p className="text-xs text-muted-foreground">
+                Material: {rollupData.rollup.cost_percentages.material_pct.toFixed(1)}% | 
+                Labor: {rollupData.rollup.cost_percentages.labor_pct.toFixed(1)}%
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overhead (15%)</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Overhead ({rollupData?.project_info?.overhead_percent || 15}%)
+            </CardTitle>
+            {rollupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -254,7 +357,10 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit (10%)</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Profit ({rollupData?.project_info?.profit_percent || 10}%)
+            </CardTitle>
+            {rollupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -265,11 +371,17 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Estimate</CardTitle>
+            {rollupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               ${totalEstimate.toLocaleString()}
             </div>
+            {rollupData?.rollup?.cost_summary?.cost_per_sf && (
+              <p className="text-xs text-muted-foreground">
+                ${rollupData.rollup.cost_summary.cost_per_sf.toFixed(2)}/SF
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -291,23 +403,19 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
                   <CardTitle>Quantity Takeoff</CardTitle>
                   <CardDescription>Detailed line items for the estimate</CardDescription>
                 </div>
-                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button>+ Add Item</Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-[400px]">
-                    <SheetHeader>
-                      <SheetTitle>
-                        {selectedItem ? "Edit Item" : "Add New Item"}
-                      </SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-6">
-                      <p className="text-muted-foreground">
-                        Item form will be implemented here with React Hook Form + Zod validation.
-                      </p>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                <div className="flex space-x-2">
+                  <Button onClick={() => setIsSheetOpen(true)}>+ Add Item</Button>
+                  <ImportDialog 
+                    estimateId={params.id}
+                    onImportComplete={refreshItems}
+                    trigger={
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        Import
+                      </Button>
+                    }
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -373,25 +481,31 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
                 <CardDescription>Cost breakdown by construction phase</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={phaseData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {phaseData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {rollupLoading ? (
+                  <div className="flex items-center justify-center h-[300px]">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={getPhaseChartData()}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${((percent as number || 0) * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {getPhaseChartData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
@@ -401,28 +515,34 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
                 <CardDescription>Detailed phase breakdown</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Phase</TableHead>
-                      <TableHead className="text-right">Direct Cost</TableHead>
-                      <TableHead className="text-right">Percentage</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {phaseData.map((phase) => (
-                      <TableRow key={phase.name}>
-                        <TableCell className="font-medium">{phase.name}</TableCell>
-                        <TableCell className="text-right">
-                          ${phase.value.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {((phase.value / totalDirectCost) * 100).toFixed(1)}%
-                        </TableCell>
+                {rollupLoading ? (
+                  <div className="flex items-center justify-center h-[200px]">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Phase</TableHead>
+                        <TableHead className="text-right">Direct Cost</TableHead>
+                        <TableHead className="text-right">Percentage</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {getPhaseChartData().map((phase) => (
+                        <TableRow key={phase.name}>
+                          <TableCell className="font-medium">{phase.name}</TableCell>
+                          <TableCell className="text-right">
+                            ${phase.value.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {((phase.value / totalDirectCost) * 100).toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -435,18 +555,24 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
               <CardDescription>Cost breakdown by trade with direct, indirect, and overhead costs</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={tradeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="trade" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="direct" fill="#3b82f6" name="Direct Cost" />
-                  <Bar dataKey="indirect" fill="#10b981" name="Indirect Cost" />
-                  <Bar dataKey="overhead" fill="#f59e0b" name="Overhead" />
-                </BarChart>
-              </ResponsiveContainer>
+              {rollupLoading ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={getTradeChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="trade" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="direct" fill="#3b82f6" name="Direct Cost" />
+                    <Bar dataKey="indirect" fill="#10b981" name="Indirect Cost" />
+                    <Bar dataKey="overhead" fill="#f59e0b" name="Overhead" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -458,25 +584,30 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
               <CardDescription>Complete cost analysis and summary</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Direct Costs</h4>
-                    <div className="space-y-1">
-                      {phaseData.map((phase) => (
-                        <div key={phase.name} className="flex justify-between text-sm">
-                          <span>{phase.name}</span>
-                          <span>${phase.value.toLocaleString()}</span>
+              {rollupLoading ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Direct Costs</h4>
+                      <div className="space-y-1">
+                        {getPhaseChartData().map((phase) => (
+                          <div key={phase.name} className="flex justify-between text-sm">
+                            <span>{phase.name}</span>
+                            <span>${phase.value.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t pt-2 font-medium">
+                        <div className="flex justify-between">
+                          <span>Total Direct</span>
+                          <span>${totalDirectCost.toLocaleString()}</span>
                         </div>
-                      ))}
-                    </div>
-                    <div className="border-t pt-2 font-medium">
-                      <div className="flex justify-between">
-                        <span>Total Direct</span>
-                        <span>${totalDirectCost.toLocaleString()}</span>
                       </div>
                     </div>
-                  </div>
                   <div className="space-y-2">
                     <h4 className="font-medium">Indirect Costs</h4>
                     <div className="space-y-1">
@@ -497,11 +628,21 @@ export default function EstimateWorkspace({ params }: { params: { id: string } }
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Add/Edit Item Dialog */}
+      <AddItemDialog
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        estimateId={params.id}
+        item={selectedItem}
+        onItemSaved={refreshItems}
+      />
     </div>
   );
 }
