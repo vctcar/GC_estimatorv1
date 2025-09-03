@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Backend API service (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gc-estimator-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - gc-estimator-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Next.js service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gc-estimator-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    networks:
+      - gc-estimator-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Optional: Database service (PostgreSQL)
+  # Uncomment if you need a database
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: gc-estimator-db
+  #   environment:
+  #     - POSTGRES_DB=gc_estimator
+  #     - POSTGRES_USER=estimator
+  #     - POSTGRES_PASSWORD=password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - gc-estimator-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U estimator -d gc_estimator"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+networks:
+  gc-estimator-network:
+    driver: bridge
+
+volumes:
+  backend_data:
+  # postgres_data:  # Uncomment if using database

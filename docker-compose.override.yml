@@ -1,0 +1,52 @@
+# Development override - automatically used when running docker-compose up
+version: '3.8'
+
+services:
+  # Backend API service - Development overrides
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: gc-estimator-backend-dev
+    environment:
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Frontend Next.js service - Development overrides
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: gc-estimator-frontend-dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: ["npm", "run", "dev"]
+    depends_on:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M

@@ -1,0 +1,11 @@
+uniformat_phase,masterformat_divisions,description
+00,"00;01",Pre-construction and general requirements
+10,"02;17;18;19;20",Site work, earthwork, and utilities
+20,"03",Foundation and concrete work
+30,"04;05;06",Structural systems and framing
+40,"07;08",Building enclosure and weather protection
+50,"09;12;13",Interior systems and basic finishes
+60,"15;22;23;24",Mechanical and HVAC systems
+70,"16;25;26;27;28",Electrical and communication systems
+80,"09;10;11;14",Finishes and specialized systems
+90,"00;01",Project closeout and final requirements

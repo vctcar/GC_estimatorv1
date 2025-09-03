@@ -1,0 +1,28 @@
+# Frontend-only development setup (no volume mounts)
+version: '3.8'
+
+services:
+  # Frontend Next.js service - Standalone testing
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: gc-estimator-frontend-test
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+networks:
+  default:
+    driver: bridge

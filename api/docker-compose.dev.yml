@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - .:/app  # Mount for development (hot reload)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

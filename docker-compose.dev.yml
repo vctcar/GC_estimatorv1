@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Backend API service - Development mode with hot reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: gc-estimator-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - gc-estimator-network
+    restart: unless-stopped
+
+  # Frontend Next.js service - Development mode with hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: gc-estimator-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: ["npm", "run", "dev"]
+    networks:
+      - gc-estimator-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  gc-estimator-network:
+    driver: bridge

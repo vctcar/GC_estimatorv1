@@ -1,57 +1,62 @@
-# GC Estimator API
+# GC Estimator API - Docker Setup
 
-FastAPI backend for the General Contractor Estimation Tool.
+This directory contains the containerized FastAPI application for the GC Estimator.
 
-## Features
+## 🐳 Docker Configuration
 
-- RESTful API endpoints for estimate management
-- Excel/CSV file import and parsing
-- Cost rollup calculations
-- CORS support for Next.js frontend
-- Interactive API documentation
+### Files
+- `Dockerfile` - Production-optimized container
+- `Dockerfile.dev` - Development container with hot reload
+- `docker-compose.yml` - Production compose configuration
+- `docker-compose.dev.yml` - Development compose with volume mounting
+- `.dockerignore` - Build optimization exclusions
 
-## API Endpoints
+### Build & Run Commands
 
-### Estimates Management
+#### Production Mode
+```bash
+# Build from project root
+docker build -f api/Dockerfile -t gc-estimator-api .
+
+# Run standalone
+docker run -p 8000:8000 gc-estimator-api
+
+# Run with docker-compose (from api/ directory)
+cd api && docker-compose up
+```
+
+#### Development Mode (with hot reload)
+```bash
+# Run with docker-compose dev config
+cd api && docker-compose -f docker-compose.dev.yml up
+```
+
+### API Endpoints
+
+- `GET /` - Root endpoint with version info
+- `GET /health` - Health check endpoint
 - `GET /api/estimates` - List all estimates
 - `POST /api/estimates` - Create new estimate
-- `GET /api/estimates/{id}` - Get estimate details
-- `PUT /api/estimates/{id}` - Update estimate metadata
+- `POST /api/estimates/import` - Import QTO Excel/CSV files
+- `GET /api/estimates/{id}` - Get specific estimate
+- `PUT /api/estimates/{id}` - Update estimate
 - `DELETE /api/estimates/{id}` - Delete estimate
+- `GET /api/estimates/{id}/rollup` - Get cost rollup calculations
 
-### File Import
-- `POST /api/estimates/import` - Import QTO from Excel/CSV file
+### Environment Variables
 
-### Items Management
-- `POST /api/estimates/{id}/items` - Add new line item
-- `PUT /api/estimates/{id}/items/{item_id}` - Update line item
-- `DELETE /api/estimates/{id}/items/{item_id}` - Delete line item
+- `CORS_ORIGINS` - Comma-separated list of allowed origins (default: `http://localhost:3000,http://127.0.0.1:3000`)
+- `PYTHONPATH` - Set to `/app` for proper module imports
 
-### Calculations
-- `GET /api/estimates/{id}/rollup` - Get cost rollup summary
+### Features
 
-## Installation
+- **Python 3.10** - Matches project requirements
+- **Production Ready** - No reload flag, optimized copying
+- **Security** - Non-root user execution
+- **Health Monitoring** - Built-in health checks
+- **Excel Support** - Includes openpyxl for XLSX files
+- **CORS Configured** - Ready for frontend integration
 
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+### Deployment
 
-2. Start the server:
-```bash
-python start_api.py
-```
-
-## Development
-
-The API server runs on `http://localhost:8000` with:
-- Interactive docs: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/`
-
-## Integration with Frontend
-
-The API is configured with CORS to work with the Next.js frontend running on `http://localhost:3000`.
-
-## Data Storage
-
-Currently uses in-memory storage. For production, replace with a database solution.
+The container is optimized for deployment platforms like Fly.io, Railway, or any Docker-compatible hosting service.

@@ -1,0 +1,87 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.vim/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile.dev
+docker-compose.dev.yml
+docker-compose.override.yml
+
+# Documentation and examples
+*.md
+README*
+examples/
+notebook_demo.ipynb
+sample_config.yaml
+*.ipynb
+
+# Test files
+*test*.py
+TEST_*
+tests/
+test_*/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+
+# Frontend files (building from root context)
+frontend/
+node_modules/
+
+# Backend directory (we're using api/ instead)
+backend/
+
+# Development and deployment scripts
+deploy.sh
+Makefile
