@@ -17,16 +17,16 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY api/requirements.txt .
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (optimized for production)
-COPY api/*.py ./
-COPY api/catalogs/ ./catalogs/
-COPY api/pricing/ ./pricing/
+COPY *.py ./
+COPY catalogs/ ./catalogs/
+COPY pricing/ ./pricing/
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser \

@@ -1,0 +1,22 @@
+# Development Dockerfile for Next.js frontend
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies only when needed
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy source code (no volume mounts)
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Run the development server
+CMD ["npm", "run", "dev"]
