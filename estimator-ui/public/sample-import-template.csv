@@ -1,8 +1,0 @@
-Phase,Item,Unit,Quantity,Waste,Unit Cost,Lump Sum
-Site Work,Excavation,CY,1500,10,25.50,0
-Site Work,Backfill,CY,1200,5,18.75,0
-Concrete,Foundation,CY,800,8,450.00,0
-Concrete,Slab on Grade,SF,5000,3,12.50,0
-Masonry,CMU Walls,SF,3000,5,28.00,0
-Mechanical,HVAC Systems,LS,0,0,0,125000.00
-Electrical,Electrical Power,LS,0,0,0,95000.00
