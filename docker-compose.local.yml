@@ -1,0 +1,43 @@
+# Local Development Docker Compose
+# Usage: docker-compose -f docker-compose.local.yml up
+
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      # Mount source for hot reload in development
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules  # Preserve node_modules in container
+    restart: unless-stopped
+
+# Optional: Add a volume for API data persistence
+volumes:
+  api_data:
+    driver: local
