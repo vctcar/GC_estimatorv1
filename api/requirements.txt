@@ -7,6 +7,12 @@ numpy>=1.21.0
 pydantic>=2.0.0
 openpyxl>=3.0.0  # For Excel file support
 
+# OAuth and Authentication dependencies
+authlib>=1.2.0  # OAuth integration
+python-jose[cryptography]>=3.3.0  # JWT token handling
+httpx>=0.24.0  # HTTP client for OAuth requests
+starlette>=0.27.0  # Session middleware
+
 # Optional dependencies for enhanced functionality
 # matplotlib>=3.5.0  # For plotting and visualization
 # seaborn>=0.11.0   # For statistical visualizations
