@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import AuthWrapper from "@/components/AuthWrapper";
+import UserProfile from "@/components/UserProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,20 +160,24 @@ export default function EstimatesList() {
   });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AuthWrapper>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Estimates</h1>
           <p className="text-muted-foreground">Manage your construction estimates</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            Import Excel
-          </Button>
-          <Button>
-            + New Estimate
-          </Button>
+        <div className="flex items-center space-x-4">
+          <div className="flex space-x-2">
+            <Button variant="outline">
+              Import Excel
+            </Button>
+            <Button>
+              + New Estimate
+            </Button>
+          </div>
+          <UserProfile />
         </div>
       </div>
 
@@ -252,6 +258,7 @@ export default function EstimatesList() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AuthWrapper>
   );
 }

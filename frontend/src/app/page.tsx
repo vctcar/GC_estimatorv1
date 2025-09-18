@@ -1,22 +1,30 @@
+'use client'
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateEstimateDialog } from "@/components/CreateEstimateDialog";
+import AuthWrapper from "@/components/AuthWrapper";
+import UserProfile from "@/components/UserProfile";
 
 export default function Dashboard() {
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AuthWrapper>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">GC Estimator Dashboard</h1>
           <p className="text-muted-foreground">Manage and track your construction estimates</p>
         </div>
-        <div className="flex space-x-2">
-          <CreateEstimateDialog />
-          <Link href="/estimates">
-            <Button variant="outline">View All Estimates</Button>
-          </Link>
+        <div className="flex items-center space-x-4">
+          <div className="flex space-x-2">
+            <CreateEstimateDialog />
+            <Link href="/estimates">
+              <Button variant="outline">View All Estimates</Button>
+            </Link>
+          </div>
+          <UserProfile />
         </div>
       </div>
 
@@ -100,6 +108,7 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AuthWrapper>
   );
 }
